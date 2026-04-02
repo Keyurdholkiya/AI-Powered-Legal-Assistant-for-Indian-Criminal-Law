@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Indian Legal Agent - Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background:
+                linear-gradient(rgba(234, 244, 255, 0.9), rgba(246, 251, 255, 0.95)),
+                url('https://images.unsplash.com/photo-1589829545856-d10d557cf95f');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        /* App Title */
+        h1 {
+            font-size: 40px;
+            font-weight: 700;
+            color: #0b3d91;
+            margin-bottom: 25px;
+            text-align: center;
+            letter-spacing: 1px;
+            text-shadow: 0 4px 12px rgba(11, 61, 145, 0.2);
+        }
+
+        /* Login Card */
+        .card {
+            background: rgba(255, 255, 255, 0.15);
+            /* transparent glass */
+            padding: 40px 35px;
+            border-radius: 18px;
+            width: 380px;
+            text-align: center;
+
+            /* Glass Effect */
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+
+            /* Glass border */
+            border: 1px solid rgba(255, 255, 255, 0.3);
+
+            /* Soft premium shadow */
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.25);
+        }
+
+        h2 {
+            color: #1e90ff;
+            margin-bottom: 25px;
+            font-size: 28px;
+        }
+
+        .error {
+            color: red;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+            text-align: left;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cfe6ff;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            border-color: #1e90ff;
+            outline: none;
+            box-shadow: 0 0 8px rgba(30, 144, 255, 0.3);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #1e90ff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #0b78e3;
+            transform: translateY(-1px);
+        }
+
+        .signup {
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .signup a {
+            color: #0b3d91;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .signup a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- App Branding -->
+    <h1>⚖️ Indian Legal Agent</h1>
+
+    <!-- Login Card -->
+    <div class="card">
+        <h2>Login</h2>
+
+        {% if error %}
+        <p class="error">{{ error }}</p>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <input type="text" name="username" placeholder="Enter Username" required>
+            </div>
+
+            <div class="form-group">
+                <input type="password" name="password" placeholder="Enter Password" required>
+            </div>
+
+            <button type="submit">Login</button>
+        </form>
+
+        <div class="signup">
+            New user? <a href="/accounts/signup/">Signup</a>
+        </div>
+    </div>
+
+</body>
+
+</html>

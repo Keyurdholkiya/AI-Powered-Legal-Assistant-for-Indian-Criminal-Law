@@ -1,0 +1,145 @@
+{% extends "chat/base.html" %}
+{% block content %}
+<div class="messages">
+    {% for message in messages %}
+    <div class="message {{ message.role }}">
+        <div class="content">
+            {% if message.role == "assistant" %}
+                <div class="ai-tag">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71L12 2z"/></svg>
+                    Legal Assistant
+                </div>
+            {% endif %}
+            {{ message.content|linebreaks }}
+        </div>
+    </div>
+    {% empty %}
+    <div style="text-align: center; margin-top: 15vh;">
+        <h1 style="font-size: 40px; font-weight: 500; color: #1f1f1f; margin-bottom: 16px;">
+            Hello, {{ request.user.username|capfirst }}
+        </h1>
+        <p style="font-size: 24px; color: #b4b4b4;">How can I assist you with Indian Law today?</p>
+    </div>
+    {% endfor %}
+</div>
+<div class="input-container">
+    <form method="post" class="input-box" id="chat-form">
+        {% csrf_token %}
+        <textarea name="message" id="message-input" placeholder="Ask anything about IPC, CrPC, or Case Law..." rows="1" required 
+            oninput='this.style.height = "";this.style.height = this.scrollHeight + "px"'></textarea>
+        <button type="submit" id="submit-btn" style="position: relative;">
+            <span class="btn-text">Ask AI</span>
+            <span class="btn-loader" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="spinner" style="animation: spin 1s linear infinite;"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+            </span>
+        </button>
+    </form>
+</div>
+<style>
+@keyframes spin { 100% { transform: rotate(360deg); } }
+.blinking-cursor {
+    display: inline-block;
+    animation: blink 1s step-end infinite;
+    vertical-align: baseline;
+    margin-left: 2px;
+}
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+</style>
+<script>
+    const form = document.querySelector('#chat-form');
+    const messagesDiv = document.querySelector('.messages');
+    const input = document.querySelector('#message-input');
+    const submitBtnText = document.querySelector('.btn-text');
+    const submitBtnLoader = document.querySelector('.btn-loader');
+    const submitBtn = document.querySelector('#submit-btn');
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const userMessage = input.value;
+        if (!userMessage.trim()) return;
+        const emptyState = messagesDiv.querySelector('div[style*="text-align: center"]');
+        if (emptyState) {
+            emptyState.style.display = 'none';
+        }
+        const formattedUserMsg = userMessage.replace(/\n/g, '<br>');
+        messagesDiv.insertAdjacentHTML('beforeend', `
+            <div class="message user">
+                <div class="content">${formattedUserMsg}</div>
+            </div>
+        `);
+        
+        input.value = '';
+        input.style.height = '';
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        submitBtn.disabled = true;
+        submitBtnText.style.display = 'none';
+        submitBtnLoader.style.display = 'block';
+        const formData = new FormData(form);
+        formData.append('message', userMessage);
+        try {
+            const response = await fetch(window.location.href, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                const msgId = 'msg-' + Date.now();
+                messagesDiv.insertAdjacentHTML('beforeend', `
+                    <div class="message assistant">
+                        <div class="content">
+                            <div class="ai-tag">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71L12 2z"/></svg>
+                                Legal Assistant
+                            </div>
+                            <br>
+                            <span id="${msgId}"></span><span class="blinking-cursor" id="cursor-${msgId}">●</span>
+                        </div>
+                    </div>
+                `);
+                const textContainer = document.getElementById(msgId);
+                const cursor = document.getElementById('cursor-' + msgId);
+                const fullTextArray = Array.from(data.response);
+                let index = 0;
+                function typeNext() {
+                    if (index < fullTextArray.length) {
+                        if (fullTextArray[index] === '\n') {
+                            textContainer.insertAdjacentHTML('beforeend', '<br>');
+                        } else {
+                            textContainer.insertAdjacentText('beforeend', fullTextArray[index]);
+                        }
+                        index++;
+                        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                        setTimeout(typeNext, 15);
+                    } else {
+                        cursor.style.display = 'none';
+                    }
+                }
+                typeNext();
+            } else {
+                console.error("Server error", response.status);
+                alert("An error occurred while communicating with the server.");
+            }
+        } catch (error) {
+            console.error("Fetch error:", error);
+            alert("Network error.");
+        } finally {
+            submitBtn.disabled = false;
+            submitBtnText.style.display = 'inline';
+            submitBtnLoader.style.display = 'none';
+        }
+    });
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            form.dispatchEvent(new Event('submit', { cancelable: true }));
+        }
+    });
+</script>
+{% endblock %}
